@@ -12,7 +12,7 @@ COPY src/Dsw2025Tpi.Domain/*.csproj src/Dsw2025Tpi.Domain/
 COPY tests/ECommerce.UnitTests/*.csproj tests/ECommerce.UnitTests/
 COPY tests/ECommerce.IntegrationTests/*.csproj tests/ECommerce.IntegrationTests/
 
-RUN dotnet restore
+RUN dotnet restore ECommerce.API.sln
 
 # 2. Copiar el resto del código y compilar la API
 COPY . .
