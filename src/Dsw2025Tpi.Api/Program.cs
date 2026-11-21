@@ -8,6 +8,8 @@ using Dsw2025Tpi.Domain.Interfaces;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Text;
@@ -182,8 +184,10 @@ public class Program
 
                 if (app.Environment.IsEnvironment("Testing"))
                 {
-                    authContext.Database.EnsureCreated();
-                    context.Database.EnsureCreated();
+                    var authCreator = authContext.Database.GetService<IDatabaseCreator>() as IRelationalDatabaseCreator;
+                    authCreator?.CreateTables();
+                    var appCreator = context.Database.GetService<IDatabaseCreator>() as IRelationalDatabaseCreator;
+                    appCreator?.CreateTables();
                 }
                 else
                 {
