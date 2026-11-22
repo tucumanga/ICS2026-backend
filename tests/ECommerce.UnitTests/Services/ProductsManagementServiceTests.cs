@@ -148,6 +148,6 @@ public class ProductsManagementServiceTests
 
         // Assert
         await act.Should().ThrowAsync<KeyNotFoundException>()
-            .WithMessage($"No se encontró un producto con el ID: {missingId}");
+            .WithMessage($"No se un producto con el ID: {missingId}");
     }
 }
