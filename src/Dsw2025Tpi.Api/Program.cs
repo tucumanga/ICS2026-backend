@@ -8,6 +8,8 @@ using Dsw2025Tpi.Domain.Interfaces;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Text;
@@ -94,10 +96,13 @@ public class Program
 
         builder.Services.AddHealthChecks();
 
-        builder.Services.AddDbContext<AuthenticateContext>(options =>
+        if (!builder.Environment.IsEnvironment("Testing"))
         {
-            options.UseSqlServer(connectionString, sqlOptions => sqlOptions.EnableRetryOnFailure(10, TimeSpan.FromSeconds(5), null));
-        });
+            builder.Services.AddDbContext<AuthenticateContext>(options =>
+            {
+                options.UseSqlServer(connectionString, sqlOptions => sqlOptions.EnableRetryOnFailure(10, TimeSpan.FromSeconds(5), null));
+            });
+        }
 
         // --- AQU� EST� EL CAMBIO ---
         builder.Services.AddIdentity<IdentityUser, IdentityRole>(options =>
@@ -138,10 +143,13 @@ public class Program
             });
 
 
-        builder.Services.AddDbContext<Dsw2025TpiContext>(options =>
+        if (!builder.Environment.IsEnvironment("Testing"))
         {
-            options.UseSqlServer(connectionString, sqlOptions => sqlOptions.EnableRetryOnFailure(10, TimeSpan.FromSeconds(5), null));
-        });
+            builder.Services.AddDbContext<Dsw2025TpiContext>(options =>
+            {
+                options.UseSqlServer(connectionString, sqlOptions => sqlOptions.EnableRetryOnFailure(10, TimeSpan.FromSeconds(5), null));
+            });
+        }
 
         builder.Services.AddSingleton<JwtTokenService>();
         builder.Services.AddAuthorization();
@@ -172,10 +180,20 @@ public class Program
             try
             {
                 var authContext = services.GetRequiredService<AuthenticateContext>();
-                authContext.Database.Migrate();
-
                 var context = services.GetRequiredService<Dsw2025TpiContext>();
-                context.Database.Migrate();
+
+                if (app.Environment.IsEnvironment("Testing"))
+                {
+                    var authCreator = authContext.Database.GetService<IDatabaseCreator>() as IRelationalDatabaseCreator;
+                    authCreator?.CreateTables();
+                    var appCreator = context.Database.GetService<IDatabaseCreator>() as IRelationalDatabaseCreator;
+                    appCreator?.CreateTables();
+                }
+                else
+                {
+                    authContext.Database.Migrate();
+                    context.Database.Migrate();
+                }
 
                 var userManager = services.GetRequiredService<UserManager<IdentityUser>>();
                 var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
